@@ -1,0 +1,410 @@
+﻿// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  nombre   String
+  email    String
+  whatsapp String
+
+  objetivo       String
+  experiencia    String
+  disponibilidad String
+
+  lesiones String?
+  mensaje  String?
+
+  source String?
+  status String  @default("new") // new | contacted | approved | rejected
+
+  inviteToken String?   @unique
+  invitedAt   DateTime?
+
+  approvedAt DateTime?
+  profiles   Profile[]
+}
+
+model Profile {
+  id        String   @id // clerk user id
+  createdAt DateTime @default(now())
+
+  role   String // coach | client
+  email  String
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId               String
+  status               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?   @unique
+  currentPeriodEnd     DateTime?
+
+  @@index([userId])
+}
+
+model Coach {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  name        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clients      ClientProfile[]
+  appointments Appointment[]
+  sentMessages Message[]
+}
+
+model ClientProfile {
+  id          String  @id @default(cuid())
+  clerkUserId String  @unique
+  coachId     String?
+  coach       Coach?  @relation(fields: [coachId], references: [id])
+
+  alturaCm       Int?
+  pesoKg         Float?
+  meta           String?
+  experiencia    String?
+  lesiones       String?
+  disponibilidad String?
+
+  // ✅ Preferencias de notificación
+  notifyEmail    Boolean @default(true)
+  notifyPush     Boolean @default(true)
+  notifyWhatsApp Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  checkIns      WeeklyCheckIn[]
+  trainingPlans TrainingPlan[]
+  macroTargets  MacroTarget[]
+  mealLogs      MealLog[]
+  workoutLogs   WorkoutLog[]
+  conversations Conversation[]
+  appointments  Appointment[]
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 3) PLANES DE ENTRENAMIENTO
+// ════════════════════════════════════════════════════════════════════════════
+
+model TrainingPlan {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  title     String
+  isActive  Boolean   @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+
+  weeks TrainingWeek[]
+  days  TrainingDay[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, isActive])
+}
+
+model TrainingWeek {
+  id     String       @id @default(cuid())
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  weekNumber Int     @default(1) // Semana 1, 2, 3...
+  name       String? // "Semana de carga", "Deload"
+  notes      String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([planId, weekNumber])
+  @@index([planId])
+}
+
+model TrainingDay {
+  id     String       @id @default(cuid())
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int     // 1..7 (Lun..Dom)
+  name      String? // "Pierna A", "Push", etc.
+  notes     String?
+
+  exercises TrainingExercise[]
+  order     Int                @default(0)
+
+  @@index([planId, dayOfWeek])
+}
+
+model TrainingExercise {
+  id    String      @id @default(cuid())
+  dayId String
+  day   TrainingDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  name    String  // "Sentadilla"
+  sets    Int?
+  reps    String? // "6-8", "12", "AMRAP"
+  rir     String? // "2", "1-2"
+  restSec Int?
+  tempo   String?
+  notes   String?
+
+  order Int @default(0)
+
+  workoutSets WorkoutSet[]
+
+  @@index([dayId, order])
+}
+
+// ✅ Registro real de entrenamiento (WorkoutEntry)
+model WorkoutLog {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  date      DateTime @default(now())
+  dayOfWeek Int? // referencia al día del plan
+  notes     String?
+  completed Boolean  @default(false)
+
+  sets WorkoutSet[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, date])
+}
+
+model WorkoutSet {
+  id           String      @id @default(cuid())
+  workoutLogId String
+  workoutLog   WorkoutLog  @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  exerciseId   String?
+  exercise     TrainingExercise? @relation(fields: [exerciseId], references: [id])
+
+  exerciseName String // respaldo si no hay exerciseId
+  setNumber    Int
+  weightKg     Float?
+  reps         Int?
+  rpe          Float? // 1-10
+  rir          Int?   // reps in reserve
+  notes        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([workoutLogId])
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 4) MACROS Y NUTRICIÓN
+// ════════════════════════════════════════════════════════════════════════════
+
+model MacroTarget {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  name       String? // "Fase de volumen", "Cutting", "Mantenimiento"
+  kcal       Int
+  proteinG   Int
+  carbsG     Int
+  fatG       Int
+  isActive   Boolean  @default(true)
+  startDate  DateTime?
+  endDate    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, isActive])
+}
+
+model MealLog {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  date       DateTime @default(now())
+  mealType   String?  // "desayuno", "almuerzo", "cena", "snack"
+  
+  // Totales del día o comida
+  kcal       Int?
+  proteinG   Int?
+  carbsG     Int?
+  fatG       Int?
+
+  // Adherencia
+  adherencePct Int?    // 0-100
+  notes        String?
+
+  foods FoodLog[]
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId, date])
+}
+
+model FoodLog {
+  id        String  @id @default(cuid())
+  mealLogId String
+  mealLog   MealLog @relation(fields: [mealLogId], references: [id], onDelete: Cascade)
+
+  name     String
+  quantity Float?  // gramos, unidades, etc.
+  unit     String? // "g", "oz", "unidad"
+  kcal     Int?
+  proteinG Int?
+  carbsG   Int?
+  fatG     Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([mealLogId])
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 5) CHECK-INS CON FOTOS
+// ════════════════════════════════════════════════════════════════════════════
+
+model WeeklyCheckIn {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+
+  weekStart     DateTime // lunes 00:00
+  weightKg      Float?
+  waistCm       Float?
+  sleepAvgHours Float?
+  stepsAvg      Int?
+  adherencePct  Int?     // 0..100
+  mood          Int?     // 1..5
+  notes         String?
+
+  photoUrls  String[] // URLs de fotos
+  photos     CheckInPhoto[]
+
+  coachNotes String?
+  status     String   @default("SUBMITTED") // SUBMITTED | REVIEWED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, weekStart])
+  @@index([clientId, weekStart])
+}
+
+model CheckInPhoto {
+  id        String        @id @default(cuid())
+  checkInId String
+  checkIn   WeeklyCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+
+  url       String
+  pose      String?  // "frente", "espalda", "lateral", "piernas"
+  notes     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([checkInId])
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 6) CHAT (COACH <-> CLIENTE)
+// ════════════════════════════════════════════════════════════════════════════
+
+model Conversation {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  lastMessageAt DateTime?
+  
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId]) // 1 conversación por cliente
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId   String  // clerkUserId (coach o cliente)
+  senderRole String  // "coach" | "client"
+  
+  // Relación opcional al coach
+  coachId String?
+  coach   Coach?  @relation(fields: [coachId], references: [id])
+
+  content    String
+  type       String   @default("text") // "text" | "image" | "audio" | "plan_update"
+  
+  // Adjuntos opcionales
+  attachmentUrl String?
+  
+  seen     Boolean  @default(false)
+  seenAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 7) CALENDARIO / CITAS
+// ════════════════════════════════════════════════════════════════════════════
+
+model Appointment {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  coachId  String
+  coach    Coach         @relation(fields: [coachId], references: [id])
+
+  type        String   // "posing" | "llamada" | "revision"
+  title       String?
+  description String?
+
+  startTime DateTime
+  endTime   DateTime?
+  timezone  String   @default("America/Costa_Rica")
+
+  status String @default("BOOKED") // BOOKED | CANCELLED | COMPLETED
+
+  // Recordatorios enviados
+  reminder24hSent Boolean @default(false)
+  reminder1hSent  Boolean @default(false)
+
+  // Google Calendar sync (v2)
+  googleEventId String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, startTime])
+  @@index([coachId, startTime])
+  @@index([status])
+}

@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  nombre   String
+  email    String
+  whatsapp String
+
+  objetivo       String
+  experiencia    String
+  disponibilidad String
+
+  lesiones String?
+  mensaje  String?
+
+  source String?
+  status String  @default("new") // new | contacted | approved | rejected
+
+  inviteToken String?   @unique
+  invitedAt   DateTime?
+
+  approvedAt DateTime?
+  profiles   Profile[]
+}
+
+model Profile {
+  id        String   @id // clerk user id
+  createdAt DateTime @default(now())
+
+  role   String // coach | client
+  email  String
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId               String
+  status               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?   @unique
+  currentPeriodEnd     DateTime?
+
+  @@index([userId])
+}
+
+model Coach {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  name        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clients ClientProfile[]
+}
+
+model ClientProfile {
+  id          String  @id @default(cuid())
+  clerkUserId String  @unique
+  coachId     String?
+  coach       Coach?  @relation(fields: [coachId], references: [id])
+
+  alturaCm       Int?
+  pesoKg         Float?
+  meta           String?
+  experiencia    String?
+  lesiones       String?
+  disponibilidad String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  checkIns      WeeklyCheckIn[]
+  trainingPlans TrainingPlan[]
+}
+
+model TrainingPlan {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  title     String
+  isActive  Boolean   @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+
+  days TrainingDay[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, isActive])
+}
+
+model TrainingDay {
+  id     String       @id @default(cuid())
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  dayOfWeek Int // 1..7 (Lun..Dom) o como lo manejes
+  name      String? // �Pierna A�, �Push�, etc.
+  notes     String?
+
+  exercises TrainingExercise[]
+  order     Int                @default(0)
+
+  @@index([planId, dayOfWeek])
+}
+
+model TrainingExercise {
+  id    String      @id @default(cuid())
+  dayId String
+  day   TrainingDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  name    String // �Sentadilla�
+  sets    Int?
+  reps    String? // �6-8�, �12�, �AMRAP�
+  rir     String? // �2�, �1-2�
+  restSec Int?
+  tempo   String?
+  notes   String?
+
+  order Int @default(0)
+
+  @@index([dayId, order])
+}
+
+model WeeklyCheckIn {
+  id       String        @id @default(cuid())
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+
+  weekStart     DateTime // lunes 00:00 o �inicio de semana� normalizado
+  weightKg      Float?
+  waistCm       Float?
+  sleepAvgHours Float?
+  stepsAvg      Int?
+  adherencePct  Int? // 0..100
+  mood          Int? // 1..5
+  notes         String?
+
+  photoUrls String[] // luego pod�s migrar a tabla CheckInPhoto
+
+  coachNotes String? // comentario del coach
+  status     String  @default("SUBMITTED") // SUBMITTED | REVIEWED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, weekStart]) // 1 check-in por semana por cliente
+  @@index([clientId, weekStart])
+}
