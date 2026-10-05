@@ -1,5 +1,6 @@
-﻿import { auth, currentUser } from "@clerk/nextjs/server";
+﻿import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { getCurrentEmail, isCoachEmail } from "@/lib/auth";
 import LeadCardClient from "./LeadCardClient";
 
 type Lead = {
@@ -19,15 +20,6 @@ type Lead = {
     inviteUrl: string | null;
 };
 
-function isCoachEmail(email: string | null | undefined) {
-    const allow = (process.env.COACH_EMAILS ?? "")
-        .split(",")
-        .map((s) => s.trim().toLowerCase())
-        .filter(Boolean);
-    if (allow.length === 0) return true; // MVP: si no configuras, deja entrar
-    return email ? allow.includes(email.toLowerCase()) : false;
-}
-
 async function fetchLeads(): Promise<Lead[]> {
     const api = process.env.NEXT_PUBLIC_API_URL!;
     const r = await fetch(`${api}/admin/leads`, { cache: "no-store" });
@@ -39,8 +31,7 @@ export default async function CoachLeadsPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
 
-    const u = await currentUser();
-    const email = u?.emailAddresses?.[0]?.emailAddress;
+    const email = await getCurrentEmail();
     if (!isCoachEmail(email)) {
         return (
             <main className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

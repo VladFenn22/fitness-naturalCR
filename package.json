@@ -1,5 +1,5 @@
 {
-	"name": "culturismo-natural",
+	"name": "fitness-natural-cr",
 	"private": true,
 	"packageManager": "pnpm@9.0.0",
 	"scripts": {
@@ -10,5 +10,8 @@
 	},
 	"dependencies": {
 		"lucide-react": "^0.263.0"
+	},
+	"devDependencies": {
+		"chokidar": "^5.0.0"
 	}
 }

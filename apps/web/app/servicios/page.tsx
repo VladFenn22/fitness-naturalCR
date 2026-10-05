@@ -3,39 +3,39 @@ import Navbar from "../../components/Navbar";
 
 const paquetes = [
     {
-        name: "Base (Hábitos + Progreso)",
-        price: "Desde ₡15.000/mes",
-        highlight: "Ideal para personas ocupadas",
+        name: "Base",
+        price: "₡15.000/mes",
+        highlight: "Para empezar con estructura",
         items: [
-            "Plan de entrenamiento personalizado",
-            "Objetivo de macros (simple y práctico)",
-            "1 check-in semanal (fotos + ajustes)",
-            "Acceso a chat para dudas puntuales",
+            "Rutina de entrenamiento personalizada",
+            "Plan nutricional con plazo definido",
+            "Descarga de ambos en PDF",
+            "Coach asignado a tu cuenta",
         ],
     },
     {
         name: "Coaching Completo",
-        price: "Desde ₡20.000/mes",
+        price: "₡20.000/mes",
         highlight: "El más recomendado",
         featured: true,
         items: [
-            "Plan de entrenamiento + progresiones",
-            "Macros por fase (subida/definición/mantenimiento)",
-            "Check-in semanal con feedback detallado",
-            "Chat directo (soporte continuo)",
-            "Revisión de técnica/ejecución por video (opcional)",
+            "Rutina con series, repeticiones, RIR y descansos",
+            "Plan nutricional por comidas, alimentos y macros",
+            "Renovación del plan al vencer el plazo",
+            "Actualizaciones de tu coach cuando progresás",
+            "Descarga de ambos en PDF",
         ],
     },
     {
         name: "Competencia Natural",
-        price: "Desde ₡25.000/mes",
-        highlight: "Para tarima y peak week",
+        price: "₡25.000/mes",
+        highlight: "Para quienes apuntan a tarima",
         items: [
-            "Plan completo orientado a competencia",
-            "Ajustes más frecuentes según etapa",
-            "Posing y presentación física",
-            "Check-ins + estrategia por semana",
-            "Soporte cercano en semanas clave",
+            "Rutina orientada a competencia",
+            "Plan nutricional con plazos más cortos",
+            "Ajustes del plan según la etapa",
+            "Seguimiento cercano de tu coach",
+            "Descarga de ambos en PDF",
         ],
     },
 ];
@@ -104,7 +104,7 @@ export default function ServiciosPage() {
                                 </div>
                                 <div className="mt-1 text-2xl font-bold">{p.price}</div>
                                 <div className="mt-1 text-xs text-slate-500">
-                                    *Definimos el precio final según alcance y frecuencia de soporte
+                                    *Suscripción mensual. Podés cancelar cuando querás.
                                 </div>
                             </div>
 
@@ -119,7 +119,7 @@ export default function ServiciosPage() {
 
                             <div className="mt-6">
                                 <Link
-                                    href="/sign-up"
+                                    href="/aplicar"
                                     className={[
                                         "inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition",
                                         p.featured
@@ -152,7 +152,7 @@ export default function ServiciosPage() {
                         </div>
                     </div>
                     <Link
-                        href="/sign-up"
+                        href="/aplicar"
                         className="inline-flex items-center justify-center rounded-xl bg-[#D61F2C] px-5 py-3 text-sm font-semibold text-white hover:opacity-95"
                     >
                         Aplicar ahora

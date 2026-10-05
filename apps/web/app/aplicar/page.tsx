@@ -81,7 +81,7 @@ export default function AplicarPage() {
             const to = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER!;
             const text =
                 `Hola 👋 Soy ${data.nombre}.\n\n` +
-                `Acabo de aplicar a la asesoría de Culturismo Natural CR.\n` +
+                `Acabo de aplicar a la asesoría de Fitness Natural CR.\n` +
                 `Mi objetivo es *${objetivoLabel[data.objetivo]}* y entreno *${diasLabel[data.disponibilidad]} días/semana*.\n\n` +
                 `Quedo atento(a) para coordinar los siguientes pasos.\n` +
                 `¡Pura Vida!\n\n` +
@@ -267,8 +267,8 @@ export default function AplicarPage() {
                             <ol className="mt-3 space-y-2 text-sm text-slate-600">
                                 <li>1) Revisamos tu objetivo y disponibilidad</li>
                                 <li>2) Te propongo el plan recomendado</li>
-                                <li>3) Definimos frecuencia de check-ins y soporte</li>
-                                <li>4) Arrancamos con onboarding y tu primera semana</li>
+                                <li>3) Te enviamos la invitación para crear tu cuenta</li>
+                                <li>4) Activás la suscripción y recibís tu rutina y tu plan nutricional</li>
                             </ol>
                         </div>
 
@@ -285,7 +285,7 @@ export default function AplicarPage() {
                             <h3 className="text-lg font-semibold">No es para vos si…</h3>
                             <ul className="mt-3 space-y-2 text-sm text-slate-600">
                                 <li>• Buscás “resultados en 2 semanas”</li>
-                                <li>• No querés seguir un plan ni reportar check-ins</li>
+                                <li>• No querés seguir una rutina ni un plan nutricional</li>
                                 <li>• Buscás atajos o química</li>
                             </ul>
                         </div>

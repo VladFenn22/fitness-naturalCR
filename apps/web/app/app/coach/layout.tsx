@@ -15,14 +15,20 @@ export default function CoachLayout({ children }: { children: React.ReactNode })
                             <div className="flex items-center gap-3">
                                 <div className="h-9 w-9 rounded-xl bg-[#D61F2C]" />
                                 <div>
-                                    <div className="text-sm font-semibold text-gray-900">Culturismo Natural</div>
+                                    <div className="text-sm font-semibold text-gray-900">Fitness Natural CR</div>
                                     <div className="text-xs text-gray-500">Panel Coach</div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <Link className="text-sm text-gray-600 hover:text-gray-900" href="/app/client">
-                                    Panel Cliente
+                                <Link className="text-sm text-gray-600 hover:text-gray-900" href="/app/coach/clients">
+                                    Clientes
+                                </Link>
+                                <Link className="text-sm text-gray-600 hover:text-gray-900" href="/app/coach/leads">
+                                    Leads
+                                </Link>
+                                <Link className="text-sm text-gray-600 hover:text-gray-900" href="/app/coach/coaches">
+                                    Coaches
                                 </Link>
                                 <UserButton afterSignOutUrl="/" />
                             </div>

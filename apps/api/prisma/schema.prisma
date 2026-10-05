@@ -65,6 +65,9 @@ model Coach {
   id          String   @id @default(cuid())
   clerkUserId String   @unique
   name        String?
+  email       String?
+  bio         String?
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -77,6 +80,8 @@ model ClientProfile {
   coachId     String?
   coach       Coach?  @relation(fields: [coachId], references: [id])
 
+  nombre         String?
+  email          String?
   alturaCm       Int?
   pesoKg         Float?
   meta           String?
@@ -86,8 +91,10 @@ model ClientProfile {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  checkIns      WeeklyCheckIn[]
-  trainingPlans TrainingPlan[]
+  trainingPlans  TrainingPlan[]
+  nutritionPlans NutritionPlan[]
+
+  @@index([coachId])
 }
 
 model TrainingPlan {
@@ -113,8 +120,8 @@ model TrainingDay {
   planId String
   plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  dayOfWeek Int // 1..7 (Lun..Dom) o como lo manejes
-  name      String? // �Pierna A�, �Push�, etc.
+  dayOfWeek Int // 1..7 (Lun..Dom)
+  name      String? // "Pierna A", "Push", etc.
   notes     String?
 
   exercises TrainingExercise[]
@@ -128,10 +135,10 @@ model TrainingExercise {
   dayId String
   day   TrainingDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
 
-  name    String // �Sentadilla�
+  name    String // "Sentadilla"
   sets    Int?
-  reps    String? // �6-8�, �12�, �AMRAP�
-  rir     String? // �2�, �1-2�
+  reps    String? // "6-8", "12", "AMRAP"
+  rir     String? // "2", "1-2"
   restSec Int?
   tempo   String?
   notes   String?
@@ -141,28 +148,66 @@ model TrainingExercise {
   @@index([dayId, order])
 }
 
-model WeeklyCheckIn {
+// ── CU-09 · PLAN NUTRICIONAL (vigencia por plazo determinado) ─────────────────
+
+model NutritionPlan {
   id       String        @id @default(cuid())
   clientId String
-  client   ClientProfile @relation(fields: [clientId], references: [id])
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  weekStart     DateTime // lunes 00:00 o �inicio de semana� normalizado
-  weightKg      Float?
-  waistCm       Float?
-  sleepAvgHours Float?
-  stepsAvg      Int?
-  adherencePct  Int? // 0..100
-  mood          Int? // 1..5
-  notes         String?
+  title    String
+  isActive Boolean @default(true)
 
-  photoUrls String[] // luego pod�s migrar a tabla CheckInPhoto
+  // El plazo es obligatorio: define hasta cuándo rige el plan
+  startDate DateTime
+  endDate   DateTime
 
-  coachNotes String? // comentario del coach
-  status     String  @default("SUBMITTED") // SUBMITTED | REVIEWED
+  // Objetivos diarios del plazo
+  kcal      Int?
+  proteinaG Int?
+  carbsG    Int?
+  grasasG   Int?
+
+  notes String?
+
+  meals NutritionMeal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([clientId, weekStart]) // 1 check-in por semana por cliente
-  @@index([clientId, weekStart])
+  @@index([clientId, isActive])
+  @@index([clientId, endDate])
+}
+
+model NutritionMeal {
+  id     String        @id @default(cuid())
+  planId String
+  plan   NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  name  String // "Desayuno", "Merienda AM", "Almuerzo"
+  time  String? // "07:00"
+  notes String?
+
+  items NutritionItem[]
+  order Int             @default(0)
+
+  @@index([planId, order])
+}
+
+model NutritionItem {
+  id     String        @id @default(cuid())
+  mealId String
+  meal   NutritionMeal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  name     String // "Arroz integral"
+  cantidad String? // "150 g", "1 taza"
+  kcal     Int?
+  proteina Float?
+  carbs    Float?
+  grasas   Float?
+  notes    String?
+
+  order Int @default(0)
+
+  @@index([mealId, order])
 }

@@ -42,7 +42,7 @@ export default function LeadCardClient({
     const wa = useMemo(() => (lead.whatsapp ?? "").replace(/\D/g, ""), [lead.whatsapp]);
     const msg = useMemo(() => {
         const url = inviteUrl ?? "";
-        return `Hola ${lead.nombre ?? ""} 👋 Soy del equipo de Culturismo Natural CR.\n\nTu solicitud fue aprobada ✅\nCreá tu cuenta aquí: ${url}\n\nLuego te guía a pagar y arrancamos.`;
+        return `Hola ${lead.nombre ?? ""} 👋 Soy del equipo de Fitness Natural CR.\n\nTu solicitud fue aprobada ✅\nCreá tu cuenta aquí: ${url}\n\nLuego te guía a pagar y arrancamos.`;
     }, [lead.nombre, inviteUrl]);
 
     async function approve() {

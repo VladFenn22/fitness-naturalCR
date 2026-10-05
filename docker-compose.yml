@@ -1,11 +1,11 @@
 services:
   db:
     image: postgres:16
-    container_name: culturismo_db
+    container_name: fitness_natural_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: culturismo
+      POSTGRES_DB: fitness_natural
     ports:
       - "5432:5432"
     volumes:

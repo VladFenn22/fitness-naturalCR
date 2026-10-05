@@ -42,3 +42,7 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# este monorepo usa pnpm; un lockfile de npm desalinea dependencias
+package-lock.json
+yarn.lock
